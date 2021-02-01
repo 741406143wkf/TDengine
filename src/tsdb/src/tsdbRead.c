@@ -1995,12 +1995,22 @@ static int tsdbReadRowsFromCache(STableCheckInfo* pCheckInfo, TSKEY maxKey, int 
 
   int64_t st = taosGetTimestampUs();
   STable* pTable = pCheckInfo->pTableObj;
+  int64_t lt = st, lt1 = 0;
+  int64_t gett = 0, copyt = 0, movet = 0;
 
   do {
+    lt1 = taosGetTimestampUs();
+    movet += lt1 - lt;
+    lt = lt1;
+    
     SDataRow row = getSDataRowInTableMem(pCheckInfo, pQueryHandle->order, pCfg->update);
     if (row == NULL) {
       break;
     }
+
+    lt1 = taosGetTimestampUs();
+    gett += lt1 - lt;
+    lt = lt1;
 
     TSKEY key = dataRowKey(row);
     if ((key > maxKey && ASCENDING_TRAVERSE(pQueryHandle->order)) || (key < maxKey && !ASCENDING_TRAVERSE(pQueryHandle->order))) {
@@ -2016,6 +2026,11 @@ static int tsdbReadRowsFromCache(STableCheckInfo* pCheckInfo, TSKEY maxKey, int 
 
     win->ekey = key;
     copyOneRowFromMem(pQueryHandle, maxRowsToRead, numOfRows, row, numOfCols, pTable);
+
+    lt1 = taosGetTimestampUs();
+    copyt += lt1 - lt;
+    lt = lt1;
+
 
     if (++numOfRows >= maxRowsToRead) {
       moveToNextRowInMem(pCheckInfo);
@@ -2037,8 +2052,8 @@ static int tsdbReadRowsFromCache(STableCheckInfo* pCheckInfo, TSKEY maxKey, int 
   }
 
   int64_t elapsedTime = taosGetTimestampUs() - st;
-  tsdbError("%p build data block from cache completed, elapsed time:%"PRId64" us, numOfRows:%d, numOfCols:%d, %p", pQueryHandle,
-            elapsedTime, numOfRows, numOfCols, pQueryHandle->qinfo);
+  tsdbError("%p build data block from cache completed, elapsed time:%"PRId64" us,gett:%"PRId64" us,copyt:%"PRId64" us,movet:%"PRId64" us, numOfRows:%d, numOfCols:%d, %p", pQueryHandle,
+            elapsedTime, gett, copyt, movet, numOfRows, numOfCols, pQueryHandle->qinfo);
 
   return numOfRows;
 }
