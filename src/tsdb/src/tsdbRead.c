@@ -1176,16 +1176,6 @@ int32_t doCopyRowsFromFileBlock(STsdbQueryHandle* pQueryHandle, int32_t capacity
   return numOfRows + num;
 }
 
-int64_t getCurrentTimeUs() {
-  struct timeval tv;
-  if (gettimeofday(&tv, NULL) != 0) {
-    perror("Failed to get current time in ms");
-    return 0.0;
-  }
-
-  return tv.tv_sec * 1000000UL + tv.tv_usec;
-}
-
 
 static void copyOneRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity, int32_t numOfRows, SDataRow row,
                               int32_t numOfCols, STable* pTable) {
@@ -1195,7 +1185,7 @@ static void copyOneRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity, 
   STSchema* pSchema = tsdbGetTableSchemaByVersion(pTable, dataRowVersion(row));
   int32_t numOfRowCols = schemaNCols(pSchema);
 
-  int64_t start = getCurrentTimeUs();
+  //int64_t start = getCurrentTimeUs();
   
   int32_t i = 0, j = 0;
   while(i < numOfCols && j < numOfRowCols) {
@@ -1248,9 +1238,9 @@ static void copyOneRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity, 
     i++;
   }
 
-  int64_t end = getCurrentTimeUs();
+  //int64_t end = getCurrentTimeUs();
 
-  tsdbError("copyOneRowFromMem spend %"PRId64"us, numOfCols:%d, numOfRowCols:%d", end-start, numOfCols, numOfRowCols);
+  //tsdbError("copyOneRowFromMem spend %"PRId64"us, numOfCols:%d, numOfRowCols:%d", end-start, numOfCols, numOfRowCols);
 }
 
 static void moveDataToFront(STsdbQueryHandle* pQueryHandle, int32_t numOfRows, int32_t numOfCols) {
@@ -2047,7 +2037,7 @@ static int tsdbReadRowsFromCache(STableCheckInfo* pCheckInfo, TSKEY maxKey, int 
   }
 
   int64_t elapsedTime = taosGetTimestampUs() - st;
-  tsdbDebug("%p build data block from cache completed, elapsed time:%"PRId64" us, numOfRows:%d, numOfCols:%d, %p", pQueryHandle,
+  tsdbError("%p build data block from cache completed, elapsed time:%"PRId64" us, numOfRows:%d, numOfCols:%d, %p", pQueryHandle,
             elapsedTime, numOfRows, numOfCols, pQueryHandle->qinfo);
 
   return numOfRows;
